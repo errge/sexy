@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Tile Puzzle</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .tile {
+      width: 50px;
+      height: 50px;
+      margin: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2em;
+      color: black;
+      border: 1px solid #ccc;
+      box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+
+    .tile.not {
+      visibility: hidden;
+    }
+
+    .tile:first-child {
+      position: relative; /* Needed for proper stacking of tiles */
+    }
+
+    .controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    /* Color Palette */
+    .color-0 { background-color: #f0f0f0; } /* White */
+    .color-1 { background-color: #a7ed89; } /* Light Green */
+    .color-2 { background-color: #f28b82; } /* Light Red */
+    .color-3 { background-color: #8ac4ff; } /* Light Blue */
+    .color-4 { background-color: #ffb74d; } /* Light Orange */
+    .color-5 { background-color: #e1bee7; } /* Light Purple */
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <h1>Color Tile Puzzle that is sexy, believe me!</h1>
+
+    <div class="row" id="row1">
+      <div class="tile" id="tile0"></div>
+      <div class="tile not"></div>
+      <div class="tile not"></div>
+      <div class="tile not"></div>
+    </div>
+
+    <div class="row" id="row2">
+      <div class="tile" id="tile1"></div>
+      <div class="tile" id="tile2"></div>
+      <div class="tile" id="tile3"></div>
+      <div class="tile" id="tile4"></div>
+    </div>
+
+    <div class="row" id="sample">
+      <div class="tile color-1"></div>
+      <div class="tile color-2"></div>
+      <div class="tile color-3"></div>
+      <div class="tile color-4"></div>
+    </div>
+
+    <div class="controls">
+      <p>Use arrow keys to play.</p>
+    </div>
+    <button id="shuffle-button" aria-label="Shuffle">Shuffle</button>
+  </main>
+
+  <script>
+    // Game State
+    let values = [0, 0, 0, 0, 0];
+    let tileColors = ["color-0", "color-1", "color-2", "color-3", "color-4"];
+
+    // Function to update the display
+    function updateDisplay() {
+      document.getElementById("tile0").textContent = values[0];
+      document.getElementById("tile0").className = "tile " + tileColors[0];
+
+      document.getElementById("tile1").textContent = values[1];
+      document.getElementById("tile1").className = "tile " + tileColors[1];
+
+      document.getElementById("tile2").textContent = values[2];
+      document.getElementById("tile2").className = "tile " + tileColors[2];
+
+      document.getElementById("tile3").textContent = values[3];
+      document.getElementById("tile3").className = "tile " + tileColors[3];
+
+      document.getElementById("tile4").textContent = values[4];
+      document.getElementById("tile4").className = "tile " + tileColors[4];
+    }
+
+    // Initial display update
+    updateDisplay();
+
+
+    // Function to handle left move
+    function moveLeft() {
+      const tempColor = tileColors[1];
+      tileColors[1] = tileColors[2];
+      tileColors[2] = tileColors[3];
+      tileColors[3] = tileColors[4];
+      tileColors[4] = tempColor;
+
+      const tempValue = values[1];
+      values[1] = values[2];
+      values[2] = values[3];
+      values[3] = values[4];
+      values[4] = tempValue;
+
+      updateDisplay();
+    }
+
+    // Function to handle right move
+    function moveRight() {
+      const tempColor = tileColors[4];
+      tileColors[4] = tileColors[3];
+      tileColors[3] = tileColors[2];
+      tileColors[2] = tileColors[1];
+      tileColors[1] = tempColor;
+
+      const tempValue = values[4];
+      values[4] = values[3];
+      values[3] = values[2];
+      values[2] = values[1];
+      values[1] = tempValue;
+
+      updateDisplay();
+    }
+
+
+    // Function to handle up move
+    function moveUp() {
+      // Swap values and colors
+      const tempValue = values[0];
+      const tempColor = tileColors[0];
+
+      values[0] = values[1];
+      tileColors[0] = tileColors[1];
+
+      values[1] = tempValue;
+      tileColors[1] = tempColor;
+
+
+      // Increment values (mod 6)
+      values[0] = (values[0] + 1) % 6;
+      values[1] = (values[1] + 1) % 6;
+      updateDisplay();
+    }
+
+    // Function to handle down move
+    function moveDown() {
+      // Swap values and colors
+      const tempValue = values[0];
+      const tempColor = tileColors[0];
+
+      values[0] = values[1];
+      tileColors[0] = tileColors[1];
+
+      values[1] = tempValue;
+      tileColors[1] = tempColor;
+
+      // Decrement values (mod 6)
+      values[0] = (values[0] + 5) % 6; // Adding 5 is equivalent to subtracting 1 in mod 6
+      values[1] = (values[1] + 5) % 6;
+
+      updateDisplay();
+    }
+
+
+    // Event listener for arrow keys
+    document.addEventListener("keydown", function(event) {
+      switch (event.key) {
+      case "ArrowLeft":
+        moveLeft();
+        break;
+      case "ArrowRight":
+        moveRight();
+        break;
+      case "ArrowUp":
+        moveUp();
+        break;
+      case "ArrowDown":
+        moveDown();
+        break;
+      }
+    });
+
+    function shuffle() {
+      for (let i = 0; i < 1000; i++) {
+        const randomMove = Math.floor(Math.random() * 4); // 0: Left, 1: Right, 2: Up, 3: Down
+        switch (randomMove) {
+        case 0:
+          moveLeft();
+          break;
+        case 1:
+          moveRight();
+          break;
+        case 2:
+          moveUp();
+          break;
+        case 3:
+          moveDown();
+          break;
+        }
+      }
+    }
+
+    document.getElementById('shuffle-button').addEventListener('click', shuffle);
+  </script>
+
+</body>
+</html>

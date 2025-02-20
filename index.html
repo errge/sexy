@@ -28,9 +28,15 @@
       align-items: center;
       font-size: 1.2em;
       color: black;
-      border: 1px solid #ccc;
+      border: 5px solid;
       box-sizing: border-box; /* Include padding and border in the element's total width and height */
     }
+
+    #tile0 { border-color: #f0f0f0; }
+    #tile1 { border-color: #a7ed89; }
+    #tile2 { border-color: #f28b82; }
+    #tile3 { border-color: #8ac4ff; }
+    #tile4 { border-color: #ffb74d; }
 
     .tile.not {
       visibility: hidden;
@@ -51,7 +57,6 @@
     .color-2 { background-color: #f28b82; } /* Light Red */
     .color-3 { background-color: #8ac4ff; } /* Light Blue */
     .color-4 { background-color: #ffb74d; } /* Light Orange */
-    .color-5 { background-color: #e1bee7; } /* Light Purple */
   </style>
 </head>
 <body>
@@ -71,13 +76,6 @@
       <div class="tile" id="tile2"></div>
       <div class="tile" id="tile3"></div>
       <div class="tile" id="tile4"></div>
-    </div>
-
-    <div class="row" id="sample">
-      <div class="tile color-1"></div>
-      <div class="tile color-2"></div>
-      <div class="tile color-3"></div>
-      <div class="tile color-4"></div>
     </div>
 
     <div class="controls">

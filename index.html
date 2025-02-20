@@ -203,8 +203,17 @@
       }
     });
 
+    function badShuffle(i) {
+      if (i > 10000) {
+        console.log("Give back your degree maybe?");
+        return false;
+      }
+      set = new Set(values);
+      return set.size < 4 || set.has(0);
+    }
+
     function shuffle() {
-      for (let i = 0; i < 1000; i++) {
+      for (let i = 0; i < 1000 || badShuffle(i); i++) {
         const randomMove = Math.floor(Math.random() * 4); // 0: Left, 1: Right, 2: Up, 3: Down
         switch (randomMove) {
         case 0:

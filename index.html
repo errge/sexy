@@ -21,6 +21,14 @@
     }
 
     .tile {
+      -webkit-touch-callout:none;
+      -webkit-user-select:none;
+      -khtml-user-select:none;
+      -moz-user-select:none;
+      -ms-user-select:none;
+      user-select:none;
+      -webkit-tap-highlight-color:rgba(0,0,0,0);
+
       width: 50px;
       height: 50px;
       margin: 5px;
@@ -66,8 +74,8 @@
     <h1>Color Tile Puzzle that is sexy, believe me!</h1>
 
     <div class="row" id="row1">
-      <div class="tile" id="tile0"></div>
       <div class="tile not"></div>
+      <div class="tile" id="tile0"></div>
       <div class="tile not"></div>
       <div class="tile not"></div>
     </div>
@@ -80,7 +88,8 @@
     </div>
 
     <div class="controls">
-      <p>Use arrow keys to play.</p>
+      <p>Desktop: use arrow keys to play.</p>
+      <p>Mobile: touch bottom row to move left/right, touch column to move up/down.</p>
       <p>Your goal: all numbers to zero, no color mismatch in borders.</p>
     </div>
     <button id="shuffle-button" aria-label="Shuffle">Shuffle</button>
@@ -154,16 +163,16 @@
       const tempValue = values[0];
       const tempColor = tileColors[0];
 
-      values[0] = values[1];
-      tileColors[0] = tileColors[1];
+      values[0] = values[2];
+      tileColors[0] = tileColors[2];
 
-      values[1] = tempValue;
-      tileColors[1] = tempColor;
+      values[2] = tempValue;
+      tileColors[2] = tempColor;
 
 
       // Increment values (mod 6)
       values[0] = (values[0] + 1) % 6;
-      values[1] = (values[1] + 1) % 6;
+      values[2] = (values[2] + 1) % 6;
       updateDisplay();
     }
 
@@ -173,15 +182,15 @@
       const tempValue = values[0];
       const tempColor = tileColors[0];
 
-      values[0] = values[1];
-      tileColors[0] = tileColors[1];
+      values[0] = values[2];
+      tileColors[0] = tileColors[2];
 
-      values[1] = tempValue;
-      tileColors[1] = tempColor;
+      values[2] = tempValue;
+      tileColors[2] = tempColor;
 
       // Decrement values (mod 6)
       values[0] = (values[0] + 5) % 6; // Adding 5 is equivalent to subtracting 1 in mod 6
-      values[1] = (values[1] + 5) % 6;
+      values[2] = (values[2] + 5) % 6;
 
       updateDisplay();
     }
@@ -235,6 +244,10 @@
     }
 
     document.getElementById('shuffle-button').addEventListener('click', shuffle);
+    document.getElementById('tile0').addEventListener('click', moveUp);
+    document.getElementById('tile1').addEventListener('click', moveLeft);
+    document.getElementById('tile2').addEventListener('click', moveDown);
+    document.getElementById('tile4').addEventListener('click', moveRight);
   </script>
 
 </body>

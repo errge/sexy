@@ -93,6 +93,7 @@
       <p>Your goal: all numbers to zero, no color mismatch in borders.</p>
     </div>
     <button id="shuffle-button" aria-label="Shuffle">Shuffle</button>
+    <button id="sexy-shuffle-button" aria-label="Sexy Shuffle">Sexy Shuffle</button>
   </main>
 
   <script>
@@ -214,17 +215,21 @@
       }
     });
 
-    function badShuffle(i) {
-      if (i > 10000) {
-        console.log("Give back your degree maybe?");
-        return false;
-      }
+    function sexyShuffle(i) {
       set = new Set(values);
-      return set.size < 4 || set.has(0);
+      let randomEnough = set.size >= 4 && !set.has(0);
+      let happensOnCube = values.reduce((a, b) => a + b, 0) % 6 == 0;
+      return randomEnough && happensOnCube
     }
 
-    function shuffle() {
-      for (let i = 0; i < 1000 || badShuffle(i); i++) {
+    function goodShuffle(i) {
+      set = new Set(values);
+      let randomEnough = set.size >= 4 && !set.has(0);
+      return randomEnough
+    }
+
+    function shuffle(fn) {
+      for (let i = 0; i < 1000 || !fn(i); i++) {
         const randomMove = Math.floor(Math.random() * 4); // 0: Left, 1: Right, 2: Up, 3: Down
         switch (randomMove) {
         case 0:
@@ -243,7 +248,8 @@
       }
     }
 
-    document.getElementById('shuffle-button').addEventListener('click', shuffle);
+    document.getElementById('shuffle-button').addEventListener('click', () => shuffle(goodShuffle));
+    document.getElementById('sexy-shuffle-button').addEventListener('click', () => shuffle(sexyShuffle));
     document.getElementById('tile0').addEventListener('click', moveUp);
     document.getElementById('tile1').addEventListener('click', moveLeft);
     document.getElementById('tile2').addEventListener('click', moveDown);

@@ -1,0 +1,18 @@
+body {
+    background-color: black;
+}
+
+#terminal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    height: fit-content;
+    margin: auto; /* Center within the parent */
+    padding: 20px 5px 5px;
+}
+
+/* Disable the scrollbar. How to do this in other browsers? */
+.xterm-viewport::-webkit-scrollbar {
+    display: none;
+}

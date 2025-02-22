@@ -1,0 +1,43 @@
+name: Build and Deploy to github.io
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build the WASM Rubik
+        shell: bash -l {0}
+        run: |
+          cd rubik/web
+          ./docker-build.sh
+          # LULZ: github pipelines don't like symlinks and they go into big infinite loops...
+          rm dist/sexy
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: rubik/web/dist/
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

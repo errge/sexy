@@ -17,12 +17,10 @@ async function main() {
         rows: 30,
         cols: 81,
         scrollback: 0,
-        fontFamily: "Fira Mono, DejaVu Sans Mono, Noto Sans Mono, monospace",
-        lineHeight: 1.0,
-        convertEol: true,
     });
     term.open(document.getElementById("terminal")!);
-    // Without this, there are gaps between the block characters.
+
+    // Without this, there are gaps between the block characters and performance is not good enough.
     term.loadAddon(new CanvasAddon());
 
     term.writeln("Loading...");

@@ -94,9 +94,7 @@ colors = {
 
 def coloredtext(text, rgb):
     r, g, b = rgb
-    print(chr(27) + f'[38;2;{r};{g};{b}m', end = '')
-
-    return text
+    return chr(27) + f'[38;2;{r};{g};{b}m' + text
 
 def whitetext(text):
     return coloredtext(text, colors['I'])
@@ -222,6 +220,11 @@ class Cube:
         sys.stdout.flush()
 
     def doanim(self, force = False):
+        if self.anim == -1:
+            # During shuffle we are skipping a lot of animations, because wasmer+xterm.js can't keep up.
+            if self.steps % 100 == 0:
+                self.draw()
+            return 0
         if self.anim:
             time.sleep(self.anim)
             self.draw()
@@ -374,8 +377,8 @@ try:
             case 'N':
                 shuffle = list(product([cube.left, cube.front, cube.right, cube.up, cube.down, cube.back], [-1, 1, 2]))
                 oldanim = cube.anim
-                cube.anim = 0
-                for s in range(100):
+                cube.anim = -1
+                for s in range(400):
                     f, i = choice(shuffle)
                     f(i)
                 cube.anim = oldanim

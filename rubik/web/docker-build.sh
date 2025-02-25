@@ -4,8 +4,7 @@ set -euo pipefail
 
 # Build the 2D Rubik's Cube
 rm -rf dist .iid
-cp ../rubik.py .
-docker build --iidfile=.iid .
+docker buildx build --iidfile .iid -f Dockerfile ..
 mkdir -p dist/rubik
 
 # Put it in dist/rubik (https://errge.github.io/sexy/rubik)

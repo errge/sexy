@@ -19,6 +19,7 @@ jobs:
           ./docker-build.sh
           # LULZ: github pipelines don't like symlinks and they go into big infinite loops...
           rm dist/sexy
+          sed -i -e s/GIT/github-actions-build-${{ github.sha }}/ dist/rubik/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

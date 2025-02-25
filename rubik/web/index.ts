@@ -1,18 +1,17 @@
 import "@xterm/xterm/css/xterm.css";
 import type { Instance } from "@wasmer/sdk";
 import { Terminal } from "@xterm/xterm";
-import { WebglAddon } from '@xterm/addon-webgl';
-
-// What is this? Why is it needed? Without it the init fails.
-// @ts-ignore
-import WasmModule from "@wasmer/sdk/wasm?url";
+import { WebglAddon } from "@xterm/addon-webgl";
 
 async function main() {
+    // From: https://github.com/wasmerio/wasmer-js/blob/905e9a8a4cf09486abfe14f9ec2adc242574d24a/examples/wasmer.sh/index.ts
+    // Note: We dynamically import the Wasmer SDK to make sure the bundler puts
+    // it in its own chunk. This works around an issue where just importing xterm.js
+    // runs top-level code which accesses the DOM, and if it's in the same chunk
+    // as @wasmer/sdk, each Web Worker will try to run this code and crash.
+    // See https://github.com/wasmerio/wasmer-js/issues/373
     const { Directory, Wasmer, init } = await import("@wasmer/sdk");
-
-    // const log = "trace";
-    const log = undefined;
-    await init({ log, module: WasmModule });
+    await init();
 
     const term = new Terminal({
         rows: 30,
@@ -29,7 +28,7 @@ async function main() {
     term.writeln("Loading...");
     const pkg = await Wasmer.fromRegistry("python/python");
     const home = new Directory();
-    const rubik_py = await (await fetch("rubik.py")).text();
+    const rubik_py = (await import('/public/rubik.py?raw')).default;
     await home.writeFile("main.py", rubik_py);
 
     term.writeln("Starting...");

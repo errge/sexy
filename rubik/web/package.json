@@ -7,7 +7,7 @@
   "description": "",
   "dependencies": {
     "@wasmer/sdk": "^0.8.0",
-    "@xterm/addon-webgl": "^0.18.0",
+    "@xterm/addon-canvas": "^0.7.0",
     "@xterm/xterm": "^5.5.0"
   },
   "devDependencies": {

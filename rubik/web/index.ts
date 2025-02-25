@@ -1,7 +1,7 @@
 import "@xterm/xterm/css/xterm.css";
 import type { Instance } from "@wasmer/sdk";
 import { Terminal } from "@xterm/xterm";
-import { WebglAddon } from "@xterm/addon-webgl";
+import { CanvasAddon } from "@xterm/addon-canvas";
 
 async function main() {
     // From: https://github.com/wasmerio/wasmer-js/blob/905e9a8a4cf09486abfe14f9ec2adc242574d24a/examples/wasmer.sh/index.ts
@@ -23,7 +23,7 @@ async function main() {
     });
     term.open(document.getElementById("terminal")!);
     // Without this, there are gaps between the block characters.
-    term.loadAddon(new WebglAddon());
+    term.loadAddon(new CanvasAddon());
 
     term.writeln("Loading...");
     const pkg = await Wasmer.fromRegistry("python/python");

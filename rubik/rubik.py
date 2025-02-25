@@ -334,7 +334,11 @@ try:
             case 'x':
                 cube.undo()
             case 'Q':
-                break
+                if os.getenv('RUBIK_ON_THE_WEB'):
+                    cube.__init__()
+                    cube.draw()
+                else:
+                    break
             case 'u':
                 cube.up(1)
             case 'i':

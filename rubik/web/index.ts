@@ -27,12 +27,12 @@ async function main() {
 
     term.writeln("Loading...");
     const pkg = await Wasmer.fromRegistry("python/python");
-    const home = new Directory();
-    const rubik_py = (await import('/public/rubik.py?raw')).default;
-    await home.writeFile("main.py", rubik_py);
+    const root = new Directory();
+    const rubik_py = (await import("/public/rubik.py?raw")).default;
+    await root.writeFile("main.py", rubik_py);
 
     term.writeln("Starting...");
-    const instance = await pkg.entrypoint!.run({ args: ["main.py"], mount: { "/home": home }, cwd: "/home" });
+    const instance = await pkg.entrypoint!.run({ args: ["main.py"], mount: { "/": root }, cwd: "/", env: { "RUBIK_ON_THE_WEB": "1" } });
     connectStreams(instance, term);
 
     document.addEventListener("click", (_evnt) => term.focus());

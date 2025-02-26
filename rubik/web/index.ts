@@ -53,6 +53,15 @@ async function main(): Promise<void> {
     });
     term.open(document.getElementById("terminal")!);
 
+    // Do not handle any keys with combinators, so the user can still use browser keyboard shortcuts.
+    // The ev.key.length > 1 condition is mostly there for F12...
+    term.attachCustomKeyEventHandler(ev => {
+        if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.key.length > 1)
+            return false;
+        else
+            return true;
+    });
+
     // Without this, there are gaps between the block characters and performance is not good enough.
     term.loadAddon(new CanvasAddon());
 

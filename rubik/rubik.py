@@ -1,48 +1,83 @@
 #!/usr/bin/python3
 
+import os
+web = bool(os.getenv('RUBIK_IS_ON_THE_WEB'))
+
+import asyncio
 from copy import deepcopy
 from itertools import product
 from math import ceil
-import os
 from random import choice
 import sys
 
-import termios
-import time
-import tty
-
-# By increasing stdout buffer, we reduce flickering, because only
-# sys.stdout.flush will talk to the terminal in one big batch.
-sys.stdout = open(1, "w", buffering = 10485760)
-
 class ReadOrResize():
     def __init__(self):
-        import signal
-        import socket
-        import selectors
-
-        # Reopen stdin unbuffered binary, because otherwise if the user
-        # is pressing buttons faster than the animation, then our selector
-        # gets stuck.
+        # By increasing stdout buffer, we reduce flickering, because only
+        # sys.stdout.flush will talk to the terminal in one big batch.
+        sys.stdout = open(1, 'w', buffering = 10485760)
+        # This most likely is not strictly necessary anymore for us
+        # with asyncio, but why not, sounds like the correct thing to do.
         sys.stdin = os.fdopen(0, buffering=0, mode='rb')
+        clearscreen()
+        wrapoff()
+        blackbackground()
+        hidecursor()
+        if web: return
+        import tty
+        import termios
+        # Have to use termios.tcgetattr instead of return value of tty.setcbreak (python 3.12 is still too new).
+        # The cbreak mode means, that we read characters from the terminal wo waiting for newline.
+        self.tty_attrs = termios.tcgetattr(1)
+        tty.setcbreak(1)
+        import atexit
+        atexit.register(self.cleanup)
+        self.loop = asyncio.get_running_loop()
+        self.queue = asyncio.Queue()
+        import signal
+        self.loop.add_signal_handler(signal.SIGWINCH, self.resize)
+        self.loop.add_reader(sys.stdin, self.stdin)
 
-        self.read, self.write = socket.socketpair()
-        self.selector = selectors.DefaultSelector()
-        self.selector.register(self.read, selectors.EVENT_READ)
-        self.selector.register(sys.stdin, selectors.EVENT_READ)
-        self.handler = lambda _signal, _frame: self.tick()
-        signal.signal(signal.SIGWINCH, self.handler)
+    def cleanup(self):
+        import termios
+        termios.tcsetattr(1, termios.TCSAFLUSH, self.tty_attrs)
+        wrapon()
+        resetcolors()
+        showcursor()
+        print() # new line before exit, so next bash prompt is at the beginning
+        sys.stdout.flush()
 
-    def tick(self):
-        self.write.send(b'\0')
+    def stdin(self):
+        data = sys.stdin.read(1)
+        if len(data) == 0 or data == b'\x04':
+            # \x04 is EOT, we get that on EOF from TTY in cbreak mode
+            data = 'eof'
+        else:
+            # We don't decode using any encoding, to make sure we don't get errors.
+            # We can simply get out real ASCII values and be happy.
+            # We also allow BS and DEL (for undo).
+            if data[0] >= 32 and data[0] <= 126 or data[0] in [8, 127] :
+                data = chr(data[0])
+        self.loop.call_soon(self.queue.put_nowait, data)
 
-    def readOrResize(self):
-        for key, _ in self.selector.select():
-            if key.fileobj == sys.stdin:
-                return sys.stdin.read(1).decode('ascii')
-            else:
-                self.read.recv(1)
-                return "resize"
+    def resize(self):
+        self.loop.call_soon(self.queue.put_nowait, 'resize')
+
+    async def readOrResize(self):
+        if web:
+            latency = 0.01
+            while True:
+                ret = sys.stdin.read(1).decode('ascii')
+                if ret: return ret
+                # Javascript provided us no input yet (user idle), try again soon
+                # We set latency low enough to be nice, but high enough to not be too busy of a loop
+                await asyncio.sleep(latency)
+        else:
+            try:
+                return await self.queue.get()
+            except KeyboardInterrupt:
+                return 'eof'
+            except asyncio.exceptions.CancelledError:
+                return 'eof'
 
 def pr(str):
     print(str, end = '')
@@ -188,7 +223,8 @@ class Cube:
                 return '  '
 
     def draw(self):
-        w, h = os.get_terminal_size()
+        # Has to be kept in sync with web/index.ts
+        w, h = (81, 30) if web else os.get_terminal_size()
         dw, dh = 75, 30
         vpad = int((h - dh) / 2)
         hpad = ' ' * ceil((w - dw) / 2)
@@ -219,14 +255,17 @@ class Cube:
             pr(' ' * w)
         sys.stdout.flush()
 
-    def doanim(self, force = False):
+    async def doanim(self, force = False):
         if self.anim == -1:
-            # During shuffle we are skipping a lot of animations, because wasmer+xterm.js can't keep up.
-            if self.steps % 100 == 0:
+            # During shuffle we are skipping a lot of animations, so the shuffle finishes faster
+            if self.steps % 10 == 0:
                 self.draw()
+                if web:
+                    # Give xterm.js some time to draw
+                    await asyncio.sleep(0)
             return 0
         if self.anim:
-            time.sleep(self.anim)
+            await asyncio.sleep(self.anim)
             self.draw()
         elif force:
             self.draw()
@@ -248,129 +287,121 @@ class Cube:
             if counts: self.steps += 1
             self.history.append((fn, -mul))
 
-    def undo(self):
+    async def undo(self):
         if len(self.history) > 0:
             fn, mul = self.history.pop()
-            fn(mul, True)
+            await fn(mul, True)
 
-    def up(self, mul, undo = False):
+    async def up(self, mul, undo = False):
         self.registermove(self.up, mul, undo)
-        self.rotatestate(uprow, 1 * mul) + self.doanim()
+        self.rotatestate(uprow, 1 * mul) + await self.doanim()
         for i in range(2):
             self.rotatestate(uprow, 1 * mul)
-            self.rotatestate(upside, -1 * mul) + self.doanim(True)
+            self.rotatestate(upside, -1 * mul) + await self.doanim(True)
 
-    def down(self, mul, undo = False):
+    async def down(self, mul, undo = False):
         self.registermove(self.down, mul, undo)
-        self.rotatestate(downrow, -1 * mul) + self.doanim()
+        self.rotatestate(downrow, -1 * mul) + await self.doanim()
         for i in range(2):
             self.rotatestate(downrow, -1 * mul)
-            self.rotatestate(downside, -1 * mul) + self.doanim(True)
+            self.rotatestate(downside, -1 * mul) + await self.doanim(True)
 
-    def right(self, mul, undo = False):
+    async def right(self, mul, undo = False):
         self.registermove(self.right, mul, undo)
-        self.rotatestate(rightcol, 1 * mul) + self.doanim()
+        self.rotatestate(rightcol, 1 * mul) + await self.doanim()
         for i in range(2):
             self.rotatestate(rightcol, 1 * mul)
-            self.rotatestate(rightside, -1 * mul) + self.doanim(True)
+            self.rotatestate(rightside, -1 * mul) + await self.doanim(True)
 
-    def left(self, mul, undo = False):
+    async def left(self, mul, undo = False):
         self.registermove(self.left, mul, undo)
-        self.rotatestate(leftcol, 1 * mul) + self.doanim()
+        self.rotatestate(leftcol, 1 * mul) + await self.doanim()
         for i in range(2):
             self.rotatestate(leftcol, 1 * mul)
-            self.rotatestate(leftside, 1 * mul) + self.doanim(True)
+            self.rotatestate(leftside, 1 * mul) + await self.doanim(True)
 
-    def front(self, mul, undo = False):
+    async def front(self, mul, undo = False):
         self.registermove(self.front, mul, undo)
-        self.rotatestate(frontcirc, 1 * mul) + self.doanim()
+        self.rotatestate(frontcirc, 1 * mul) + await self.doanim()
         for i in range(2):
             self.rotatestate(frontcirc, 1 * mul)
-            self.rotatestate(frontside, 1 * mul) + self.doanim(True)
+            self.rotatestate(frontside, 1 * mul) + await self.doanim(True)
 
-    def back(self, mul, undo = False):
+    async def back(self, mul, undo = False):
         self.registermove(self.back, mul, undo)
-        self.rotatestate(backcirc, 1 * mul) + self.doanim()
+        self.rotatestate(backcirc, 1 * mul) + await self.doanim()
         for i in range(2):
             self.rotatestate(backcirc, 1 * mul)
-            self.rotatestate(backside, -1 * mul) + self.doanim(True)
+            self.rotatestate(backside, -1 * mul) + await self.doanim(True)
 
-    def cuberight(self, mul, undo = False):
+    async def cuberight(self, mul, undo = False):
         self.registermove(self.cuberight, mul, undo, False)
         for i in range(3):
             if i: self.rotatestate(upside, 1 * mul)
             if i: self.rotatestate(downside, -1 * mul)
             self.rotatestate(uprow, -1 * mul)
             self.rotatestate(midrow, -1 * mul)
-            self.rotatestate(downrow, -1 * mul) + self.doanim(True)
+            self.rotatestate(downrow, -1 * mul) + await self.doanim(True)
 
-    def cubeup(self, mul, undo = False):
+    async def cubeup(self, mul, undo = False):
         self.registermove(self.cubeup, mul, undo, False)
         for i in range(3):
             if i: self.rotatestate(leftside, 1 * mul)
             if i: self.rotatestate(rightside, -1 * mul)
             self.rotatestate(leftcol, 1 * mul)
             self.rotatestate(midcol, 1 * mul)
-            self.rotatestate(rightcol, 1 * mul) + self.doanim(True)
+            self.rotatestate(rightcol, 1 * mul) + await self.doanim(True)
 
-# cbreak mode means, that we read characters from the terminal wo waiting for newline
-# Have to use termios.tcgetattr instead of trusting return of tty.setcbreak (python 3.12 is still too new).
-tty_attrs = termios.tcgetattr(1)
-tty.setcbreak(1)
-clearscreen()
-wrapoff()
-blackbackground()
-hidecursor()
-
-try:
+async def main():
     readOrResize = ReadOrResize()
     cube = Cube()
     cube.draw()
     while True:
-        key = readOrResize.readOrResize()
+        key = await readOrResize.readOrResize()
         match key:
             case 'resize':
                 cube.draw()
-            case 'x':
-                cube.undo()
-            case 'Q':
-                if os.getenv('RUBIK_ON_THE_WEB'):
+            case 'x' | '\x7f' | '\x08':
+                await cube.undo()
+            case 'Q' | 'eof':
+                if web:
+                    # No quitting on the web, just restarting
                     cube.__init__()
                     cube.draw()
                 else:
                     break
             case 'u':
-                cube.up(1)
+                await cube.up(1)
             case 'i':
-                cube.up(-1)
+                await cube.up(-1)
             case 'k':
-                cube.down(1)
+                await cube.down(1)
             case 'j':
-                cube.down(-1)
+                await cube.down(-1)
             case 'o':
-                cube.right(1)
+                await cube.right(1)
             case 'l':
-                cube.right(-1)
+                await cube.right(-1)
             case 'y' | 'z':
-                cube.left(1)
+                await cube.left(1)
             case 'h':
-                cube.left(-1)
+                await cube.left(-1)
             case 'n':
-                cube.front(1)
+                await cube.front(1)
             case 'm':
-                cube.front(-1)
+                await cube.front(-1)
             case '7':
-                cube.back(1)
+                await cube.back(1)
             case '8':
-                cube.back(-1)
+                await cube.back(-1)
             case 'd':
-                cube.cuberight(1)
+                await cube.cuberight(1)
             case 'a':
-                cube.cuberight(-1)
+                await cube.cuberight(-1)
             case 'w':
-                cube.cubeup(1)
+                await cube.cubeup(1)
             case 's':
-                cube.cubeup(-1)
+                await cube.cubeup(-1)
             case '+' | '=':
                 cube.anim += 0.01
                 cube.draw()
@@ -384,17 +415,12 @@ try:
                 cube.anim = -1
                 for s in range(400):
                     f, i = choice(shuffle)
-                    f(i)
+                    await f(i)
                 cube.anim = oldanim
                 cube.history, cube.steps = [], 0
                 cube.draw()
 
-finally:
-    # restore input buffering
-    termios.tcsetattr(1, termios.TCSAFLUSH, tty_attrs)
-    wrapon()
-    resetcolors()
-    showcursor()
-    # new line at end of program
-    print()
-    sys.stdout.flush()
+if web:
+    asyncio.get_event_loop().run_until_complete(main())
+else:
+    asyncio.run(main())

@@ -1,18 +1,51 @@
 import "@xterm/xterm/css/xterm.css";
-import type { Instance } from "@wasmer/sdk";
 import { Terminal } from "@xterm/xterm";
 import { CanvasAddon } from "@xterm/addon-canvas";
 
-async function main() {
-    // From: https://github.com/wasmerio/wasmer-js/blob/905e9a8a4cf09486abfe14f9ec2adc242574d24a/examples/wasmer.sh/index.ts
-    // Note: We dynamically import the Wasmer SDK to make sure the bundler puts
-    // it in its own chunk. This works around an issue where just importing xterm.js
-    // runs top-level code which accesses the DOM, and if it's in the same chunk
-    // as @wasmer/sdk, each Web Worker will try to run this code and crash.
-    // See https://github.com/wasmerio/wasmer-js/issues/373
-    const { Directory, Wasmer, init } = await import("@wasmer/sdk");
-    await init();
+import { loadPyodide } from "pyodide";
 
+class IO {
+    encoder: TextEncoder;
+    stdin_queue: string[];
+    term: Terminal;
+
+    constructor(term: Terminal) {
+        this.encoder = new TextEncoder();
+        this.stdin_queue = [];
+        this.term = term;
+        this.term.onData(this.pushIn);
+    }
+
+    pushIn = (key: string): void => {
+        this.stdin_queue.push(key);
+    }
+
+    popIn = (buffer: Uint8Array): number => {
+        if (this.stdin_queue.length === 0) {
+            return 0;
+        } else {
+            buffer[0] = this.encoder.encode(this.stdin_queue.shift())[0];
+            if (buffer[0] == 127) {
+                // fix xtermjs backspace handling
+                buffer[0] = 8;
+            }
+            return 1;
+        }
+    }
+
+    pushOut = (buffer: Uint8Array): number => {
+        // The "new Uint8Array" look superfluous here, but it's
+        // actually important!  It creates a deep copy of the input,
+        // and therefore it's safe when python uses the same buffer
+        // quickly to pass even more data to print very soon.  We just
+        // create deep copys of the buffers and therefore we have an
+        // "output queue" with term.write.
+        this.term.write(new Uint8Array(buffer));
+        return buffer.length;
+    }
+}
+
+async function main(): Promise<void> {
     const term = new Terminal({
         rows: 30,
         cols: 81,
@@ -23,27 +56,22 @@ async function main() {
     // Without this, there are gaps between the block characters and performance is not good enough.
     term.loadAddon(new CanvasAddon());
 
+    const io = new IO(term);
+
     term.writeln("Loading...");
-    const pkg = await Wasmer.fromRegistry("python/python");
-    const root = new Directory();
-    const rubik_py = (await import("/public/rubik.py?raw")).default;
-    await root.writeFile("main.py", rubik_py);
+    let pyodide = await loadPyodide();
+    pyodide.setStdin({ read: io.popIn });
+    pyodide.setStdout({ write: io.pushOut });
+    pyodide.setStderr({ write: io.pushOut });
 
     term.writeln("Starting...");
-    const instance = await pkg.entrypoint!.run({ args: ["main.py"], mount: { "/": root }, cwd: "/", env: { "RUBIK_ON_THE_WEB": "1" } });
-    connectStreams(instance, term);
+    const preamble = `import os\nos.environ["RUBIK_IS_ON_THE_WEB"] = "1"\n`;
+    const code = (await import("/public/rubik.py?raw")).default;
 
     document.addEventListener("click", (_evnt) => term.focus());
     term.focus();
-}
 
-const encoder = new TextEncoder();
-
-function connectStreams(instance: Instance, term: Terminal) {
-    const stdin = instance.stdin?.getWriter();
-    term.onData(data => stdin?.write(encoder.encode(data)));
-    instance.stdout.pipeTo(new WritableStream({ write: chunk => term.write(chunk) }));
-    instance.stderr.pipeTo(new WritableStream({ write: chunk => term.write(chunk) }));
+    await pyodide.runPythonAsync(preamble + code);
 }
 
 console.log("Hello there, fancy that you know about the console, good job!");

@@ -249,7 +249,7 @@ class Cube:
                 pr(strcursorleft(1) + whitetext(self.instruction(ri, repeat, False)) + hpad)
                 nextline()
 
-        pr(hpad + whitetext(f'                      h   ▼ s ▼   l               {self.steps:4d} Steps   {f"Anim: {self.anim:.2f}s " if self.anim else "Anim off    "}') + hpad)
+        pr(hpad + whitetext(f'                      h   ▼ s ▼   l               {self.steps:4d} Steps   {f"Anim: {self.anim:.2f}s " if self.anim > 0 else "Anim off    "}') + hpad)
         for _ in range(vpad + 1):
             nextline()
             pr(' ' * w)

@@ -116,26 +116,58 @@ def nextline():
     # So we can accidentally overrun, and still no flickering of the screen.
     pr(chr(27) + '[1B' + chr(27) + '[1000D')
 
-colors = {
-    'W': (255, 255, 255),
-    'G': (0, 155, 72),
-    'O': (255, 88, 0),
-    'Y': (255, 213, 0),
-    'R': (183, 18, 52),
-    'B': (0, 64, 173),
-    ' ': (0, 0, 0),    # Use to print background, black
-    'I': (102, 102, 102), # Instructions
-}
+colors = [ # White, Green, Orange, Yellow, Red, Blue, Background, Instructions
+    # normal
+    {
+        'W': (255, 255, 255),
+        'G': (0, 155, 72),
+        'O': (255, 88, 0),
+        'Y': (255, 213, 0),
+        'B': (0, 64, 173),
+        'R': (183, 18, 52),
+        ' ': (0, 0, 0),
+        'I': (102, 102, 102),
+    },
+    # colorblind https://www.reddit.com/r/Cubers/comments/m9isgu/color_blind_cube_for_deuteranopia/
+    {
+        'W': (255, 255, 255),
+        'G': (135, 62, 35),  # brown
+        'O': (140, 140, 140),
+        'Y': (255, 204, 0),
+        'B': (0, 102, 255),
+        'R': (40, 40, 40),
+        ' ': (0, 0, 0),
+        'I': (102, 102, 102),
+    },
+    # challenging
+    {
+        'W': (255, 255, 255),
+        'G': (150, 150, 150),
+        'O': (100, 100, 100),
+        'Y': ( 60,  60,  60),
+        'B': ( 40,  40,  40),
+        'R': (  0,   0,   0),
+        ' ': (0, 0, 0),
+        'I': (102, 102, 102),
+    },
+]
+
+colorindex = 0
+
+def colorswitch():
+    global colorindex
+    colorindex += 1
+    colorindex %= len(colors)
 
 def coloredtext(text, rgb):
     r, g, b = rgb
     return chr(27) + f'[38;2;{r};{g};{b}m' + text
 
 def whitetext(text):
-    return coloredtext(text, colors['I'])
+    return coloredtext(text, colors[colorindex]['I'])
 
 def colorchar(char, color_int):
-    pr(coloredtext(char, colors[chr(color_int)]))
+    pr(coloredtext(char, colors[colorindex][chr(color_int)]))
 
 upside    = [(0, 3), (0, 4), (0, 5), (1, 5), (2, 5), (2,4), (2, 3), (1, 3)]
 uprow     = [(3, x) for x in range(12)]
@@ -203,16 +235,19 @@ class Cube:
                 msg = "  Sexy'   - uoil    "
                 return msg, 3
             case 6, 1, True:
-                msg = '  Slower  - + '
-                return msg, 2
-            case 6, 2, True:
-                msg = '  Faster  - - '
-                return msg, 2
-            case 7, 1, True:
                 msg = '  Shuffle - N '
                 return msg, 2
-            case 7, 2, True:
+            case 6, 2, True:
                 msg = '  Undo    - x '
+                return msg, 2
+            case 7, 1, True:
+                msg = '  Slower  - + '
+                return msg, 2
+            case 7, 2, True:
+                msg = '  Faster  - - '
+                return msg, 2
+            case 8, 0, True:
+                msg = '  Theme   - t '
                 return msg, 2
             case 8, 2, True:
                 msg = '  Quit    - Q '
@@ -404,6 +439,9 @@ async def main():
                 await cube.cubeup(-1)
             case '+' | '=':
                 cube.anim += 0.01
+                cube.draw()
+            case 't':
+                colorswitch()
                 cube.draw()
             case '-' | '_':
                 cube.anim -= 0.01

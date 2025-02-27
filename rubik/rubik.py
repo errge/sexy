@@ -117,8 +117,8 @@ def nextline():
     pr(chr(27) + '[1B' + chr(27) + '[1000D')
 
 colors = [ # White, Green, Orange, Yellow, Red, Blue, Background, Instructions
-    # normal
     {
+        'name': 'Original',
         'W': (255, 255, 255),
         'G': (0, 155, 72),
         'O': (255, 88, 0),
@@ -128,8 +128,9 @@ colors = [ # White, Green, Orange, Yellow, Red, Blue, Background, Instructions
         ' ': (0, 0, 0),
         'I': (102, 102, 102),
     },
-    # colorblind https://www.reddit.com/r/Cubers/comments/m9isgu/color_blind_cube_for_deuteranopia/
     {
+        # https://www.reddit.com/r/Cubers/comments/m9isgu/color_blind_cube_for_deuteranopia/
+        'name': 'Colorblind',
         'W': (255, 255, 255),
         'G': (135, 62, 35),  # brown
         'O': (140, 140, 140),
@@ -139,14 +140,25 @@ colors = [ # White, Green, Orange, Yellow, Red, Blue, Background, Instructions
         ' ': (0, 0, 0),
         'I': (102, 102, 102),
     },
-    # challenging
     {
+        'name': 'Challenging',
         'W': (255, 255, 255),
         'G': (150, 150, 150),
         'O': (100, 100, 100),
         'Y': ( 60,  60,  60),
         'B': ( 40,  40,  40),
         'R': (  0,   0,   0),
+        ' ': (0, 0, 0),
+        'I': (102, 102, 102),
+    },
+    {
+        'name': 'Hungarian',
+        'W': (183, 18, 52),
+        'G': (255, 255, 255),
+        'O': (255, 88, 0),
+        'Y': (0, 155, 72),
+        'B': (255, 213, 0),
+        'R': (0, 64, 173),
         ' ': (0, 0, 0),
         'I': (102, 102, 102),
     },

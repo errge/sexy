@@ -45,13 +45,23 @@ class IO {
     }
 }
 
+function autoSize(term) {
+    term.options.fontSize = 6;
+    while (term.element.clientHeight < window.innerHeight && term.element.clientWidth < window.innerWidth) {
+        term.options.fontSize++;
+    }
+    term.options.fontSize--;
+}
+
 async function main(): Promise<void> {
     const term = new Terminal({
         rows: 30,
         cols: 81,
         scrollback: 0,
     });
-    term.open(document.getElementById("terminal")!);
+    term.open(document.getElementById("terminal"));
+    autoSize(term)
+    window.addEventListener('resize', () => autoSize(term));
 
     // Do not handle any keys with combinators, so the user can still use browser keyboard shortcuts.
     // The ev.key.length > 1 condition is mostly there for F12...

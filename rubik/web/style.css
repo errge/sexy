@@ -1,15 +1,21 @@
+* {
+    overflow: hidden; /* no scrollbars, get a bigger screen! */
+    box-sizing: border-box;
+}
+
 body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
     background-color: black;
 }
 
 #terminal {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    width: fit-content;
-    height: fit-content;
-    margin: auto; /* Center within the parent */
-    padding: 20px 5px 5px;
+    align-content: center;
+    flex-wrap: wrap;
 }
 
 /* Disable the scrollbar. How to do this in other browsers? */

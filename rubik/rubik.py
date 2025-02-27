@@ -166,9 +166,9 @@ colors = [ # White, Green, Orange, Yellow, Red, Blue, Background, Instructions
 
 colorindex = 0
 
-def colorswitch():
+def colorswitch(diff):
     global colorindex
-    colorindex += 1
+    colorindex += diff
     colorindex %= len(colors)
 
 def coloredtext(text, rgb):
@@ -259,8 +259,8 @@ class Cube:
                 msg = '  Faster  - - '
                 return msg, 2
             case 8, 0, True:
-                msg = '  Theme   - t '
-                return msg, 2
+                msg = '  Theme   - t/T     '
+                return msg, 3
             case 8, 1, True:
                 global colorindex
                 msg = f"    {colors[colorindex]['name']:16s}"
@@ -457,7 +457,10 @@ async def main():
                 cube.anim += 0.01
                 cube.draw()
             case 't':
-                colorswitch()
+                colorswitch(1)
+                cube.draw()
+            case 'T':
+                colorswitch(-1)
                 cube.draw()
             case '-' | '_':
                 cube.anim -= 0.01

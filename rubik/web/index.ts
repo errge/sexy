@@ -7,29 +7,36 @@ import { loadPyodide } from "pyodide";
 class IO {
     term: Terminal;
 
-    encoder = new TextEncoder();
     stdin_queue: string[] = [];
+    inputAvailable = () => {};
 
     constructor(term: Terminal) {
         this.term = term;
         this.term.onData(this.pushIn);
+        window.getInput = this.getInput;
     }
 
     pushIn = (key: string): void => {
         this.stdin_queue.push(key);
+        this.inputAvailable();
     }
 
-    popIn = (buffer: Uint8Array): number => {
+    getInput = async (): Promise<string> => {
         if (this.stdin_queue.length === 0) {
-            return 0;
-        } else {
-            buffer[0] = this.encoder.encode(this.stdin_queue.shift())[0];
-            if (buffer[0] == 127) {
-                // fix xtermjs backspace handling
-                buffer[0] = 8;
-            }
-            return 1;
+            const { promise, resolve } = Promise.withResolvers();
+            this.inputAvailable = resolve;
+            await promise;
         }
+
+        const ret: string = this.stdin_queue.shift();
+
+        // TODO: what to do when we don't work char-by-char???
+        if (ret.length === 1 && ret[0] == "\x7F") {
+            // fix xtermjs backspace handling
+            return "\b";
+        }
+
+        return ret;
     }
 
     // Runs inside Pyodide's code as a callback

@@ -64,13 +64,8 @@ class ReadOrResize():
 
     async def readOrResize(self):
         if web:
-            latency = 0.01
-            while True:
-                ret = sys.stdin.read(1).decode('ascii')
-                if ret: return ret
-                # Javascript provided us no input yet (user idle), try again soon
-                # We set latency low enough to be nice, but high enough to not be too busy of a loop
-                await asyncio.sleep(latency)
+            from js import getInput
+            return await getInput()
         else:
             try:
                 return await self.queue.get()

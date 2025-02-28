@@ -19,16 +19,18 @@ web = bool(os.getenv('RUBIK_IS_ON_THE_WEB'))
 import asyncio
 import sys
 
-async def getChar():
-    latency = 0.01
-    while True:
-        ret = sys.stdin.read(1)
-        if ret: return ret
-        await asyncio.sleep(latency)
+if web:
+    from js import getInput
+else:
+    async def getInput():
+        # TODO: when games will support keys like UP
+        # then we have to read out the full escape
+        # sequence char-by-char (like a prefix code)
+        return sys.stdin.read(1)
 
 async def main():
     while True:
-        s = await getChar()
+        s = await getInput()
         print("YAY! You pressed " + s, end = '\r\n')
         print("Again, you pressed " + s, end = '\r\n')
 

@@ -5,13 +5,12 @@ import { CanvasAddon } from "@xterm/addon-canvas";
 import { loadPyodide } from "pyodide";
 
 class IO {
-    encoder: TextEncoder;
-    stdin_queue: string[];
     term: Terminal;
 
+    encoder = new TextEncoder();
+    stdin_queue: string[] = [];
+
     constructor(term: Terminal) {
-        this.encoder = new TextEncoder();
-        this.stdin_queue = [];
         this.term = term;
         this.term.onData(this.pushIn);
     }
@@ -33,6 +32,7 @@ class IO {
         }
     }
 
+    // Runs inside Pyodide's code as a callback
     pushOut = (buffer: Uint8Array): number => {
         // The "new Uint8Array" look superfluous here, but it's
         // actually important!  It creates a deep copy of the input,
@@ -40,7 +40,11 @@ class IO {
         // quickly to pass even more data to print very soon.  We just
         // create deep copys of the buffers and therefore we have an
         // "output queue" with term.write.
-        this.term.write(new Uint8Array(buffer));
+        this.term.write(new Uint8Array(buffer), () => {
+            // Called when xterm MUCH later actually finishes drawing.
+            // Maybe we could do something with this to optimize
+            // out the GC regarding all the Uint8Array allocations.
+        });
         return buffer.length;
     }
 }

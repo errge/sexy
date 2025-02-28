@@ -70,7 +70,8 @@ async function main(): Promise<void> {
     // Do not handle any keys with combinators, so the user can still use browser keyboard shortcuts.
     // The ev.key.length > 1 condition is mostly there for F12...
     term.attachCustomKeyEventHandler(ev => {
-        if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.key.length > 1)
+        // Backspace is undo, so we want to steal that from the browser
+        if ((ev.ctrlKey || ev.metaKey || ev.altKey || ev.key.length > 1) && (ev.key !== "Backspace"))
             return false;
         else
             return true;

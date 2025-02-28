@@ -29,8 +29,8 @@ async def getChar():
 async def main():
     while True:
         s = await getChar()
-        print("YAY! You pressed " + s)
-        print("Again, you pressed " + s)
+        print("YAY! You pressed " + s, end = '\r\n')
+        print("Again, you pressed " + s, end = '\r\n')
 
 if not web:
     import tty

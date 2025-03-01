@@ -261,7 +261,10 @@ class Cube:
                 msg = f"    {colors[colorindex]['name']:16s}"
                 return msg, 3
             case 8, 2, True:
-                msg = '  Quit    - Q '
+                if web:
+                    msg = '  Restart - Q '
+                else:
+                    msg = '  Quit    - Q '
                 return msg, 2
             case _, _, True:
                 return '  ', 0

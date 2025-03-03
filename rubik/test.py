@@ -22,6 +22,7 @@ import sys
 if web:
     from js import getInput
 else:
+    sys.stdin = os.fdopen(0, buffering=0, mode='rb')
     async def getInput():
         # TODO: when games will support keys like UP
         # then we have to read out the full escape
@@ -29,10 +30,13 @@ else:
         return sys.stdin.read(1)
 
 async def main():
+    print('Started', end = '\r\n')
     while True:
         s = await getInput()
-        print("YAY! You pressed " + s, end = '\r\n')
-        print("Again, you pressed " + s, end = '\r\n')
+        if s == b'\x0c':
+            s = '^L'
+        print('YAY! You pressed ' + repr(s), end = '\r\n')
+        print('Again, you pressed ' + repr(s), end = '\r\n')
 
 if not web:
     import tty
@@ -40,6 +44,5 @@ if not web:
     try:
         asyncio.run(main())
     finally:
-        print("finished")
-else:
-    asyncio.get_event_loop().run_until_complete(main())
+        print('finished')
+# else postamble in web/index.ts

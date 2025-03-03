@@ -12,5 +12,5 @@ RUN curl -fsSL https://get.pnpm.io/install.sh | PNPM_HOME=/pnpm bash
 COPY web/package.json /data/
 RUN cd /data && /pnpm/pnpm install
 COPY web/index.html web/index.ts web/style.css /data/
-COPY rubik.py /data/public/
+COPY test.py rubik.py /data/public/
 RUN cd /data && node_modules/.bin/vite build --base=/sexy/rubik/ && tar -c -f /output.tar dist

@@ -475,7 +475,6 @@ async def main():
                 cube.history, cube.steps = [], 0
                 cube.draw()
 
-if web:
-    asyncio.get_event_loop().run_until_complete(main())
-else:
+if not web:
     asyncio.run(main())
+# else postamble in web/index.ts

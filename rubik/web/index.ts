@@ -8,7 +8,7 @@ class IO {
     term: Terminal;
 
     stdin_queue: string[] = [];
-    inputAvailable = () => {};
+    inputAvailable = () => { };
 
     constructor(term: Terminal) {
         this.term = term;
@@ -64,12 +64,13 @@ function autoSize(term) {
     term.options.fontSize--;
 }
 
-async function main(): Promise<void> {
-    const term = new Terminal({
-        rows: 30,
-        cols: 81,
-        scrollback: 0,
-    });
+const term = new Terminal({
+    rows: 30,
+    cols: 81,
+    scrollback: 0,
+});
+
+async function main() {
     term.open(document.getElementById("terminal"));
     autoSize(term)
     window.addEventListener('resize', () => autoSize(term));
@@ -96,14 +97,20 @@ async function main(): Promise<void> {
     pyodide.setStderr({ write: io.pushOut });
 
     term.writeln("Starting...");
-    const preamble = `import os\nos.environ["RUBIK_IS_ON_THE_WEB"] = "1"\n`;
+    // Preamble is intentionally a zero-liner, so line numbers are correct
+    // in python exceptions that may happen on the python side.
+    const preamble = `import os;os.environ["RUBIK_IS_ON_THE_WEB"] = "1";`;
     const code = (await import("/public/rubik.py?raw")).default;
+
+    // Cannot put this in the real code, because top-level await is
+    // python error even inside a never running if.
+    const postamble = `await main()\n`;
 
     document.addEventListener("click", (_evnt) => term.focus());
     term.focus();
 
-    await pyodide.runPythonAsync(preamble + code);
+    return pyodide.runPythonAsync(preamble + code + postamble);
 }
 
 console.log("Hello there, fancy that you know about the console, good job!");
-main().catch(console.error);
+main().catch(res => term.writeln(res.toString().replaceAll("\n", "\r\n"))).then(res => term.writeln("Python finished"));

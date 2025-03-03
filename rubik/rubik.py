@@ -18,10 +18,7 @@ class ReadOrResize():
         # This most likely is not strictly necessary anymore for us
         # with asyncio, but why not, sounds like the correct thing to do.
         sys.stdin = os.fdopen(0, buffering=0, mode='rb')
-        clearscreen()
-        wrapoff()
-        blackbackground()
-        hidecursor()
+        self.initscreen()
         if web: return
         import tty
         import termios
@@ -37,6 +34,12 @@ class ReadOrResize():
         self.loop.add_signal_handler(signal.SIGWINCH, self.resize)
         self.loop.add_reader(sys.stdin, self.stdin)
 
+    def initscreen(self):
+        clearscreen()
+        wrapoff()
+        blackbackground()
+        hidecursor()
+
     def cleanup(self):
         import termios
         termios.tcsetattr(1, termios.TCSAFLUSH, self.tty_attrs)
@@ -47,16 +50,10 @@ class ReadOrResize():
         sys.stdout.flush()
 
     def stdin(self):
-        data = sys.stdin.read(1)
-        if len(data) == 0 or data == b'\x04':
+        data = sys.stdin.read(1).decode('latin-1')
+        if len(data) == 0 or data == '\x04':
             # \x04 is EOT, we get that on EOF from TTY in cbreak mode
             data = 'eof'
-        else:
-            # We don't decode using any encoding, to make sure we don't get errors.
-            # We can simply get out real ASCII values and be happy.
-            # We also allow BS and DEL (for undo).
-            if data[0] >= 32 and data[0] <= 126 or data[0] in [8, 127] :
-                data = chr(data[0])
         self.loop.call_soon(self.queue.put_nowait, data)
 
     def resize(self):
@@ -474,6 +471,15 @@ async def main():
                 cube.anim = oldanim
                 cube.history, cube.steps = [], 0
                 cube.draw()
+            case 'L' | '\x0c': # Ctrl-L
+                readOrResize.initscreen()
+                cube.draw()
+            # case 'W': # put some waste, so we can test Ctrl-l
+            #     pr(whitetext('xxx\n'))
+            #     pr(whitetext('xxx\n'))
+            #     pr(whitetext('xxx\n'))
+            #     pr(whitetext('xxx\n'))
+            #     sys.stdout.flush()
 
 if not web:
     asyncio.run(main())

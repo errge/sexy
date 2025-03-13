@@ -235,7 +235,7 @@
     function sexyShuffle(i) {
       set = new Set(values);
       let randomEnough = set.size >= 4 && !set.has(0);
-      let happensOnCube = values.reduce((a, b) => a + b, 0) % 6 == 0;
+      let happensOnCube = i % 6 == 0;
       return randomEnough && happensOnCube
     }
 

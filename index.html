@@ -42,10 +42,6 @@
     }
 
     #tile0 { border-color: #f0f0f0; }
-    #tile1 { border-color: #ffb74d; }
-    #tile2 { border-color: #a7ed89; }
-    #tile3 { border-color: #f28b82; }
-    #tile4 { border-color: #8ac4ff; }
 
     .tile.not {
       visibility: hidden;
@@ -66,6 +62,10 @@
     .color-2 { background-color: #a7ed89; } /* Light Green */
     .color-3 { background-color: #f28b82; } /* Light Red */
     .color-4 { background-color: #8ac4ff; } /* Light Blue */
+    .border-1 { border-color: #ffb74d; } /* Light Orange */
+    .border-2 { border-color: #a7ed89; } /* Light Green */
+    .border-3 { border-color: #f28b82; } /* Light Red */
+    .border-4 { border-color: #8ac4ff; } /* Light Blue */
   </style>
 </head>
 <body>
@@ -100,6 +100,7 @@
     // Game State
     let values = [0, 0, 0, 0, 0];
     let tileColors = ["color-0", "color-1", "color-2", "color-3", "color-4"];
+    let tileBorders = ["" /*always white*/, "border-1", "border-2", "border-3", "border-4"];
 
     // Function to update the display
     function updateDisplay() {
@@ -107,16 +108,16 @@
       document.getElementById("tile0").className = "tile " + tileColors[0];
 
       document.getElementById("tile1").textContent = values[1];
-      document.getElementById("tile1").className = "tile " + tileColors[1];
+      document.getElementById("tile1").className = "tile " + tileColors[1] + " " + tileBorders[1];
 
       document.getElementById("tile2").textContent = values[2];
-      document.getElementById("tile2").className = "tile " + tileColors[2];
+      document.getElementById("tile2").className = "tile " + tileColors[2] + " " + tileBorders[2];
 
       document.getElementById("tile3").textContent = values[3];
-      document.getElementById("tile3").className = "tile " + tileColors[3];
+      document.getElementById("tile3").className = "tile " + tileColors[3] + " " + tileBorders[3];
 
       document.getElementById("tile4").textContent = values[4];
-      document.getElementById("tile4").className = "tile " + tileColors[4];
+      document.getElementById("tile4").className = "tile " + tileColors[4] + " " + tileBorders[4];
     }
 
     // Initial display update
@@ -130,6 +131,12 @@
       tileColors[2] = tileColors[3];
       tileColors[3] = tileColors[4];
       tileColors[4] = tempColor;
+
+      const tempBorder = tileBorders[1];
+      tileBorders[1] = tileBorders[2];
+      tileBorders[2] = tileBorders[3];
+      tileBorders[3] = tileBorders[4];
+      tileBorders[4] = tempBorder;
 
       const tempValue = values[1];
       values[1] = values[2];
@@ -147,6 +154,12 @@
       tileColors[3] = tileColors[2];
       tileColors[2] = tileColors[1];
       tileColors[1] = tempColor;
+
+      const tempBorder = tileBorders[4];
+      tileBorders[4] = tileBorders[3];
+      tileBorders[3] = tileBorders[2];
+      tileBorders[2] = tileBorders[1];
+      tileBorders[1] = tempBorder;
 
       const tempValue = values[4];
       values[4] = values[3];

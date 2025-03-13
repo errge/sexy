@@ -215,15 +215,19 @@
       switch (event.key) {
       case "ArrowLeft":
         moveLeft();
+        event.preventDefault();
         break;
       case "ArrowRight":
         moveRight();
+        event.preventDefault();
         break;
       case "ArrowUp":
         moveUp();
+        event.preventDefault();
         break;
       case "ArrowDown":
         moveDown();
+        event.preventDefault();
         break;
       }
     });

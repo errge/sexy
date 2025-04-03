@@ -92,7 +92,8 @@ async function main() {
 
     term.writeln("Loading...");
     let pyodide = await loadPyodide();
-    pyodide.setStdin({ read: io.popIn });
+    // Python -> JS stdin communication is through window.getInput
+    // pyodide.setStdin({ read: io.popIn });
     pyodide.setStdout({ write: io.pushOut });
     pyodide.setStderr({ write: io.pushOut });
 

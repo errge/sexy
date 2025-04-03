@@ -203,70 +203,69 @@ class Cube:
 
     # Very hacky API: if begin is True, we return a tuple, where the second item is how many tiles to skip from the cube
     def instruction(self, row, rowrepeat, begin):
-        match row, rowrepeat, begin:
-            case 3, 0, True:
-                return 'u ', 0
-            case 3, 0, False:
-                return ' i'
-            case 4, 0, True:
-                return 'a ', 0
-            case 4, 1, True:
-                return '◀◀', 0
-            case 4, 0, False:
-                return ' d'
-            case 4, 1, False:
-                return '▶▶'
-            case 5, 1, True:
-                return 'j ', 0
-            case 5, 1, False:
-                return ' k'
-            case 0, 0, True:
-                msg = '  Front   - m '
-                return msg, 2
-            case 0, 1, True:
-                msg = "  Front'  - n "
-                return msg, 2
-            case 0, 2, True:
-                msg = '  Back    - 7 '
-                return msg, 2
-            case 1, 0, True:
-                msg = "  Back'   - 8 "
-                return msg, 2
-            case 1, 2, True:
-                msg = "  Sexy    - ouli    "
-                return msg, 3
-            case 2, 0, True:
-                msg = "  Sexy'   - uoil    "
-                return msg, 3
-            case 6, 1, True:
-                msg = '  Shuffle - N '
-                return msg, 2
-            case 6, 2, True:
-                msg = '  Undo    - x '
-                return msg, 2
-            case 7, 1, True:
-                msg = '  Slower  - + '
-                return msg, 2
-            case 7, 2, True:
-                msg = '  Faster  - - '
-                return msg, 2
-            case 8, 0, True:
-                msg = '  Theme   - t/T     '
-                return msg, 3
-            case 8, 1, True:
-                global colorindex
-                msg = f"    {colors[colorindex]['name']:16s}"
-                return msg, 3
-            case 8, 2, True:
-                if web:
-                    msg = '  Restart - Q '
-                else:
-                    msg = '  Quit    - Q '
-                return msg, 2
-            case _, _, True:
-                return '  ', 0
-            case _, _, False:
-                return '  '
+        if (row, rowrepeat, begin) == (3, 0, True):
+            return 'u ', 0
+        if (row, rowrepeat, begin) == (3, 0, False):
+            return ' i'
+        if (row, rowrepeat, begin) == (4, 0, True):
+            return 'a ', 0
+        if (row, rowrepeat, begin) == (4, 1, True):
+            return '◀◀', 0
+        if (row, rowrepeat, begin) == (4, 0, False):
+            return ' d'
+        if (row, rowrepeat, begin) == (4, 1, False):
+            return '▶▶'
+        if (row, rowrepeat, begin) == (5, 1, True):
+            return 'j ', 0
+        if (row, rowrepeat, begin) == (5, 1, False):
+            return ' k'
+        if (row, rowrepeat, begin) == (0, 0, True):
+            msg = '  Front   - m '
+            return msg, 2
+        if (row, rowrepeat, begin) == (0, 1, True):
+            msg = "  Front'  - n "
+            return msg, 2
+        if (row, rowrepeat, begin) == (0, 2, True):
+            msg = '  Back    - 7 '
+            return msg, 2
+        if (row, rowrepeat, begin) == (1, 0, True):
+            msg = "  Back'   - 8 "
+            return msg, 2
+        if (row, rowrepeat, begin) == (1, 2, True):
+            msg = "  Sexy    - ouli    "
+            return msg, 3
+        if (row, rowrepeat, begin) == (2, 0, True):
+            msg = "  Sexy'   - uoil    "
+            return msg, 3
+        if (row, rowrepeat, begin) == (6, 1, True):
+            msg = '  Shuffle - N '
+            return msg, 2
+        if (row, rowrepeat, begin) == (6, 2, True):
+            msg = '  Undo    - x '
+            return msg, 2
+        if (row, rowrepeat, begin) == (7, 1, True):
+            msg = '  Slower  - + '
+            return msg, 2
+        if (row, rowrepeat, begin) == (7, 2, True):
+            msg = '  Faster  - - '
+            return msg, 2
+        if (row, rowrepeat, begin) == (8, 0, True):
+            msg = '  Theme   - t/T     '
+            return msg, 3
+        if (row, rowrepeat, begin) == (8, 1, True):
+            global colorindex
+            msg = f"    {colors[colorindex]['name']:16s}"
+            return msg, 3
+        if (row, rowrepeat, begin) == (8, 2, True):
+            if web:
+                msg = '  Restart - Q '
+            else:
+                msg = '  Quit    - Q '
+            return msg, 2
+        if begin == True:
+            return '  ', 0
+        if begin == False:
+            return '  '
 
     def draw(self):
         # Has to be kept in sync with web/index.ts
@@ -404,82 +403,105 @@ async def main():
     cube.draw()
     while True:
         key = await readOrResize.readOrResize()
-        match key:
-            case 'resize':
-                cube.draw()
-            case 'x' | '\x7f' | '\x08':
-                await cube.undo()
-            case 'Q' | 'eof':
-                if web:
-                    # No quitting on the web, just restarting
-                    cube.__init__()
-                    cube.draw()
-                else:
-                    break
-            case 'u':
-                await cube.up(1)
-            case 'i':
-                await cube.up(-1)
-            case 'k':
-                await cube.down(1)
-            case 'j':
-                await cube.down(-1)
-            case 'o':
-                await cube.right(1)
-            case 'l':
-                await cube.right(-1)
-            case 'y' | 'z':
-                await cube.left(1)
-            case 'h':
-                await cube.left(-1)
-            case 'n':
-                await cube.front(1)
-            case 'm':
-                await cube.front(-1)
-            case '7':
-                await cube.back(1)
-            case '8':
-                await cube.back(-1)
-            case 'd':
-                await cube.cuberight(1)
-            case 'a':
-                await cube.cuberight(-1)
-            case 'w':
-                await cube.cubeup(1)
-            case 's':
-                await cube.cubeup(-1)
-            case '+' | '=':
-                cube.anim += 0.01
-                cube.draw()
-            case 't':
-                colorswitch(1)
-                cube.draw()
-            case 'T':
-                colorswitch(-1)
-                cube.draw()
-            case '-' | '_':
-                cube.anim -= 0.01
-                cube.anim = max(cube.anim, 0)
-                cube.draw()
-            case 'N':
-                shuffle = list(product([cube.left, cube.front, cube.right, cube.up, cube.down, cube.back], [-1, 1, 2]))
-                oldanim = cube.anim
-                cube.anim = -1
-                for s in range(400):
-                    f, i = choice(shuffle)
-                    await f(i)
-                cube.anim = oldanim
-                cube.history, cube.steps = [], 0
-                cube.draw()
-            case 'L' | '\x0c': # Ctrl-L
-                readOrResize.initscreen()
-                cube.draw()
-            # case 'W': # put some waste, so we can test Ctrl-l
-            #     pr(whitetext('xxx\n'))
-            #     pr(whitetext('xxx\n'))
-            #     pr(whitetext('xxx\n'))
-            #     pr(whitetext('xxx\n'))
-            #     sys.stdout.flush()
+        if key == 'resize':
+            cube.draw()
+            continue
+        if key in ('x', '\x7f', '\x08'):
+            await cube.undo()
+            continue
+        if key in ('Q', 'eof'):
+            if not web: break
+            # No quitting on the web, just restarting
+            cube.__init__()
+            cube.draw()
+            continue
+        if key == 'u':
+            await cube.up(1)
+            continue
+        if key == 'i':
+            await cube.up(-1)
+            continue
+        if key == 'k':
+            await cube.down(1)
+            continue
+        if key == 'j':
+            await cube.down(-1)
+            continue
+        if key == 'o':
+            await cube.right(1)
+            continue
+        if key == 'l':
+            await cube.right(-1)
+            continue
+        if key in ('y', 'z'):
+            await cube.left(1)
+            continue
+        if key == 'h':
+            await cube.left(-1)
+            continue
+        if key == 'n':
+            await cube.front(1)
+            continue
+        if key == 'm':
+            await cube.front(-1)
+            continue
+        if key == '7':
+            await cube.back(1)
+            continue
+        if key == '8':
+            await cube.back(-1)
+            continue
+        if key == 'd':
+            await cube.cuberight(1)
+            continue
+        if key == 'a':
+            await cube.cuberight(-1)
+            continue
+        if key == 'w':
+            await cube.cubeup(1)
+            continue
+        if key == 's':
+            await cube.cubeup(-1)
+            continue
+        if key in ('+', '='):
+            cube.anim += 0.01
+            cube.draw()
+            continue
+        if key == 't':
+            colorswitch(1)
+            cube.draw()
+            continue
+        if key == 'T':
+            colorswitch(-1)
+            cube.draw()
+            continue
+        if key in ('-', '_'):
+            cube.anim -= 0.01
+            cube.anim = max(cube.anim, 0)
+            cube.draw()
+            continue
+        if key == 'N':
+            shuffle = list(product([cube.left, cube.front, cube.right, cube.up, cube.down, cube.back], [-1, 1, 2]))
+            oldanim = cube.anim
+            cube.anim = -1
+            for s in range(400):
+                f, i = choice(shuffle)
+                await f(i)
+            cube.anim = oldanim
+            cube.history, cube.steps = [], 0
+            cube.draw()
+            continue
+        if key in ('L', '\x0c'): # Ctrl-L
+            readOrResize.initscreen()
+            cube.draw()
+            continue
+        # if key == 'W': # put some waste, so we can test Ctrl-l
+        #     pr(whitetext('xxx\n'))
+        #     pr(whitetext('xxx\n'))
+        #     pr(whitetext('xxx\n'))
+        #     pr(whitetext('xxx\n'))
+        #     sys.stdout.flush()
+        #     continue
 
 if not web:
     asyncio.run(main())

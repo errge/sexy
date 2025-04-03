@@ -208,13 +208,13 @@ class Cube:
                 return 'u ', 0
             case 3, 0, False:
                 return ' i'
-            case (4, 0, True):
+            case 4, 0, True:
                 return 'a ', 0
-            case (4, 1, True):
+            case 4, 1, True:
                 return '◀◀', 0
-            case (4, 0, False):
+            case 4, 0, False:
                 return ' d'
-            case (4, 1, False):
+            case 4, 1, False:
                 return '▶▶'
             case 5, 1, True:
                 return 'j ', 0
